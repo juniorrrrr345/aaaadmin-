@@ -127,7 +127,7 @@ export default function ProductManager() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     )
   }
@@ -258,7 +258,7 @@ export default function ProductManager() {
             <h3 className="text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
             <p className="text-gray-600 text-sm mb-2">{product.description}</p>
             <div className="flex justify-between items-center mb-3">
-              <span className="text-lg font-bold text-primary-600">€{product.price}</span>
+              <span className="text-lg font-bold text-blue-600">€{product.price}</span>
               <span className="text-sm text-gray-500">Stock: {product.stock}</span>
             </div>
             <div className="flex space-x-2">

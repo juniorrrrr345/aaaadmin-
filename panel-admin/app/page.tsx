@@ -37,7 +37,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-medium">A</span>
                 </div>
                 <span className="text-sm text-gray-700">Admin</span>
@@ -58,13 +58,13 @@ export default function AdminDashboard() {
                   onClick={() => setActiveTab(item.name.toLowerCase().replace(' ', ''))}
                   className={`${
                     item.current
-                      ? 'bg-primary-50 border-primary-500 text-primary-700'
+                      ? 'bg-blue-50 border-blue-500 text-blue-700'
                       : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   } group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4`}
                 >
                   <item.icon
                     className={`${
-                      item.current ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'
+                      item.current ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
                     } mr-3 flex-shrink-0 h-6 w-6`}
                   />
                   {item.name}
