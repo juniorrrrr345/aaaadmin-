@@ -10,16 +10,14 @@ import {
   BellIcon
 } from '@heroicons/react/24/outline'
 import ProductManager from './components/ProductManager'
+import OrderManager from './components/OrderManager'
+import CustomerManager from './components/CustomerManager'
+import DashboardStats from './components/DashboardStats'
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard')
 
-  const stats = [
-    { name: 'Ventes totales', value: '€12,345', icon: CurrencyDollarIcon, change: '+12%', changeType: 'positive' },
-    { name: 'Produits', value: '156', icon: ShoppingBagIcon, change: '+5%', changeType: 'positive' },
-    { name: 'Clients', value: '2,847', icon: UsersIcon, change: '+8%', changeType: 'positive' },
-    { name: 'Commandes', value: '89', icon: ChartBarIcon, change: '+15%', changeType: 'positive' },
-  ]
+
 
   const navigation = [
     { name: 'Dashboard', href: '#', icon: ChartBarIcon, current: activeTab === 'dashboard' },
@@ -143,19 +141,13 @@ export default function AdminDashboard() {
 
             {activeTab === 'orders' && (
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Gestion des Commandes</h2>
-                <div className="card">
-                  <p className="text-gray-600">Interface de gestion des commandes à implémenter</p>
-                </div>
+                <OrderManager />
               </div>
             )}
 
             {activeTab === 'customers' && (
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Gestion des Clients</h2>
-                <div className="card">
-                  <p className="text-gray-600">Interface de gestion des clients à implémenter</p>
-                </div>
+                <CustomerManager />
               </div>
             )}
 
