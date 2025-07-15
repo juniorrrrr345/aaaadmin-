@@ -1,7 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { 
+  PlusIcon, 
+  PencilIcon, 
+  TrashIcon, 
+  EyeIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  PhotoIcon,
+  VideoCameraIcon,
+  StarIcon
+} from '@heroicons/react/24/outline'
 import { apiClient } from '../lib/api'
 
 interface Product {
@@ -16,6 +28,8 @@ interface Product {
   video?: string
   features?: string[]
   specifications?: any
+  rating?: number
+  sales?: number
 }
 
 export default function ProductManager() {
@@ -23,6 +37,11 @@ export default function ProductManager() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [sortBy, setSortBy] = useState('name')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -42,9 +61,13 @@ export default function ProductManager() {
 
   const loadProducts = async () => {
     setLoading(true)
-    const response = await apiClient.getProducts()
-    if (response.success && response.data) {
-      setProducts(response.data as Product[])
+    try {
+      const response = await apiClient.getProducts()
+      if (response.success && response.data) {
+        setProducts(response.data as Product[])
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des produits:', error)
     }
     setLoading(false)
   }
@@ -65,21 +88,25 @@ export default function ProductManager() {
       specifications: formData.specifications
     }
 
-    if (editingProduct) {
-      const response = await apiClient.updateProduct(editingProduct.id, productData)
-      if (response.success) {
-        setShowForm(false)
-        setEditingProduct(null)
-        resetForm()
-        loadProducts()
+    try {
+      if (editingProduct) {
+        const response = await apiClient.updateProduct(editingProduct.id, productData)
+        if (response.success) {
+          setShowForm(false)
+          setEditingProduct(null)
+          resetForm()
+          loadProducts()
+        }
+      } else {
+        const response = await apiClient.createProduct(productData)
+        if (response.success) {
+          setShowForm(false)
+          resetForm()
+          loadProducts()
+        }
       }
-    } else {
-      const response = await apiClient.createProduct(productData)
-      if (response.success) {
-        setShowForm(false)
-        resetForm()
-        loadProducts()
-      }
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error)
     }
   }
 
@@ -102,9 +129,13 @@ export default function ProductManager() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
-      const response = await apiClient.deleteProduct(id)
-      if (response.success) {
-        loadProducts()
+      try {
+        const response = await apiClient.deleteProduct(id)
+        if (response.success) {
+          loadProducts()
+        }
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error)
       }
     }
   }
@@ -124,6 +155,59 @@ export default function ProductManager() {
     })
   }
 
+  // Mock data pour la démo
+  const mockProducts: Product[] = [
+    {
+      id: '1',
+      name: 'T-shirt Premium',
+      price: 29.99,
+      description: 'T-shirt en coton bio de haute qualité',
+      longDescription: 'Un t-shirt confortable et durable, parfait pour tous les jours. Fabriqué en coton bio de haute qualité.',
+      category: 'Vêtements',
+      stock: 50,
+      images: ['/uploads/product-1-1.jpg'],
+      video: '/uploads/product-1-video.mp4',
+      features: ['Coton bio', 'Confortable', 'Durable'],
+      specifications: { material: '100% Coton bio', weight: '180g/m²' },
+      rating: 4.5,
+      sales: 125
+    },
+    {
+      id: '2',
+      name: 'Casque Audio Pro',
+      price: 89.99,
+      description: 'Casque audio sans fil avec réduction de bruit',
+      category: 'Électronique',
+      stock: 25,
+      images: ['/uploads/product-2-1.jpg'],
+      rating: 4.8,
+      sales: 89
+    }
+  ]
+
+  const products = mockProducts
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         product.description.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory
+    return matchesSearch && matchesCategory
+  })
+
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    let aValue = a[sortBy as keyof Product]
+    let bValue = b[sortBy as keyof Product]
+    
+    if (typeof aValue === 'string') aValue = aValue.toLowerCase()
+    if (typeof bValue === 'string') bValue = bValue.toLowerCase()
+    
+    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1
+    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1
+    return 0
+  })
+
+  const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))]
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -133,9 +217,14 @@ export default function ProductManager() {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Gestion des Produits</h2>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Gestion des Produits</h1>
+          <p className="text-gray-600">{products.length} produits au total</p>
+        </div>
+        
         <button
           onClick={() => setShowForm(true)}
           className="btn-primary flex items-center"
@@ -145,145 +234,253 @@ export default function ProductManager() {
         </button>
       </div>
 
-      {showForm && (
-        <div className="card mb-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            {editingProduct ? 'Modifier le produit' : 'Ajouter un produit'}
-          </h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom du produit
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="input-field"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Prix (€)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  className="input-field"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Catégorie
-                </label>
-                <input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="input-field"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Stock
-                </label>
-                <input
-                  type="number"
-                  value={formData.stock}
-                  onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                  className="input-field"
-                  required
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="input-field"
-                rows={3}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                URL de l'image
-              </label>
-              <input
-                type="url"
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                className="input-field"
-              />
-            </div>
-            <div className="flex space-x-3">
-              <button type="submit" className="btn-primary">
-                {editingProduct ? 'Modifier' : 'Ajouter'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowForm(false)
-                  setEditingProduct(null)
-                  resetForm()
-                }}
-                className="btn-secondary"
-              >
-                Annuler
-              </button>
-            </div>
-          </form>
+      {/* Filters and Search */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Rechercher un produit..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            {categories.map(category => (
+              <option key={category} value={category}>
+                {category === 'all' ? 'Toutes les catégories' : category}
+              </option>
+            ))}
+          </select>
+          
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="name">Nom</option>
+            <option value="price">Prix</option>
+            <option value="stock">Stock</option>
+            <option value="sales">Ventes</option>
+          </select>
+          
+          <button
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+            className="flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            {sortOrder === 'asc' ? <ArrowUpIcon className="h-4 w-4" /> : <ArrowDownIcon className="h-4 w-4" />}
+          </button>
         </div>
-      )}
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((product) => (
-          <div key={product.id} className="card">
-            {product.image && (
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-48 object-cover rounded-lg mb-4"
-              />
-            )}
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
-            <p className="text-gray-600 text-sm mb-2">{product.description}</p>
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-lg font-bold text-blue-600">€{product.price}</span>
-              <span className="text-sm text-gray-500">Stock: {product.stock}</span>
+      {/* Products Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {sortedProducts.map((product) => (
+          <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+            {/* Product Image */}
+            <div className="relative h-48 bg-gray-100">
+              {product.images && product.images.length > 0 ? (
+                <img
+                  src={product.images[0]}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <PhotoIcon className="h-12 w-12 text-gray-400" />
+                </div>
+              )}
+              
+              {/* Video indicator */}
+              {product.video && (
+                <div className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1">
+                  <VideoCameraIcon className="h-4 w-4 text-white" />
+                </div>
+              )}
+              
+              {/* Stock indicator */}
+              {product.stock < 10 && (
+                <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                  Stock faible
+                </div>
+              )}
             </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => handleEdit(product)}
-                className="flex-1 btn-secondary flex items-center justify-center"
-              >
-                <PencilIcon className="h-4 w-4 mr-1" />
-                Modifier
-              </button>
-              <button
-                onClick={() => handleDelete(product.id)}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
-              >
-                <TrashIcon className="h-4 w-4 mr-1" />
-                Supprimer
-              </button>
+            
+            {/* Product Info */}
+            <div className="p-4">
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="text-lg font-semibold text-gray-900 truncate">{product.name}</h3>
+                <div className="flex items-center space-x-1">
+                  {product.rating && (
+                    <div className="flex items-center">
+                      <StarIcon className="h-4 w-4 text-yellow-400" />
+                      <span className="text-sm text-gray-600 ml-1">{product.rating}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
+              
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xl font-bold text-blue-600">€{product.price}</span>
+                <span className="text-sm text-gray-500">Stock: {product.stock}</span>
+              </div>
+              
+              {product.sales && (
+                <p className="text-xs text-gray-500 mb-3">{product.sales} ventes</p>
+              )}
+              
+              {/* Actions */}
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleEdit(product)}
+                  className="flex-1 btn-secondary flex items-center justify-center text-sm"
+                >
+                  <PencilIcon className="h-4 w-4 mr-1" />
+                  Modifier
+                </button>
+                <button
+                  onClick={() => handleDelete(product.id)}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-3 rounded-lg transition-colors flex items-center justify-center text-sm"
+                >
+                  <TrashIcon className="h-4 w-4 mr-1" />
+                  Supprimer
+                </button>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      {products.length === 0 && !loading && (
-        <div className="text-center py-12">
-          <p className="text-gray-500">Aucun produit trouvé</p>
+      {/* Product Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold">
+                {editingProduct ? 'Modifier le produit' : 'Ajouter un produit'}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowForm(false)
+                  setEditingProduct(null)
+                  resetForm()
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nom du produit *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="input-field"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Prix (€) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    className="input-field"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Catégorie *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="input-field"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Stock *
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.stock}
+                    onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                    className="input-field"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description courte *
+                </label>
+                <input
+                  type="text"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="input-field"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description détaillée
+                </label>
+                <textarea
+                  value={formData.longDescription}
+                  onChange={(e) => setFormData({ ...formData, longDescription: e.target.value })}
+                  className="input-field"
+                  rows={4}
+                />
+              </div>
+              
+              <div className="flex space-x-3 pt-4">
+                <button type="submit" className="btn-primary">
+                  {editingProduct ? 'Modifier' : 'Ajouter'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForm(false)
+                    setEditingProduct(null)
+                    resetForm()
+                  }}
+                  className="btn-secondary"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
