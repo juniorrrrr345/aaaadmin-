@@ -36,7 +36,7 @@ interface OrderItem {
 }
 
 export default function OrderManager() {
-  const [orders, setOrders] = useState<Order[]>([])
+  const [ordersList, setOrdersList] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -51,7 +51,7 @@ export default function OrderManager() {
     try {
       const response = await apiClient.getOrders()
       if (response.success && response.data) {
-        setOrders(response.data as Order[])
+        setOrdersList(response.data as Order[])
       }
     } catch (error) {
       console.error('Erreur lors du chargement des commandes:', error)

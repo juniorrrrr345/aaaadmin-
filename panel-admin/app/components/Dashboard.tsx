@@ -11,7 +11,9 @@ import {
   EyeIcon,
   ClockIcon,
   CheckCircleIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  PlusIcon,
+  CogIcon
 } from '@heroicons/react/24/outline'
 import { apiClient } from '../lib/api'
 
@@ -25,7 +27,7 @@ interface Stats {
 }
 
 export default function Dashboard() {
-  const [stats, setStats] = useState<Stats | null>(null)
+  const [statsData, setStatsData] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedPeriod, setSelectedPeriod] = useState('7d')
 
@@ -38,7 +40,7 @@ export default function Dashboard() {
     try {
       const response = await apiClient.getStats()
       if (response.success && response.data) {
-        setStats(response.data as Stats)
+        setStatsData(response.data as Stats)
       }
     } catch (error) {
       console.error('Erreur lors du chargement des stats:', error)

@@ -33,7 +33,7 @@ interface Customer {
 }
 
 export default function CustomerManager() {
-  const [customers, setCustomers] = useState<Customer[]>([])
+  const [customersList, setCustomersList] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -59,7 +59,7 @@ export default function CustomerManager() {
     try {
       const response = await apiClient.getCustomers()
       if (response.success && response.data) {
-        setCustomers(response.data as Customer[])
+        setCustomersList(response.data as Customer[])
       }
     } catch (error) {
       console.error('Erreur lors du chargement des clients:', error)

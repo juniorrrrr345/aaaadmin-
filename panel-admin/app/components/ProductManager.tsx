@@ -2,17 +2,18 @@
 
 import { useState, useEffect } from 'react'
 import { 
-  PlusIcon, 
-  PencilIcon, 
-  TrashIcon, 
-  EyeIcon,
+  PlusIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
+  EyeIcon,
+  PencilIcon,
+  TrashIcon,
+  StarIcon,
+  ShoppingBagIcon,
+  CurrencyDollarIcon,
   PhotoIcon,
   VideoCameraIcon,
-  StarIcon
+  TagIcon
 } from '@heroicons/react/24/outline'
 import { apiClient } from '../lib/api'
 
@@ -27,13 +28,13 @@ interface Product {
   images?: string[]
   video?: string
   features?: string[]
-  specifications?: any
+  specifications?: Record<string, any>
   rating?: number
   sales?: number
 }
 
 export default function ProductManager() {
-  const [products, setProducts] = useState<Product[]>([])
+  const [productsList, setProductsList] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
@@ -64,7 +65,7 @@ export default function ProductManager() {
     try {
       const response = await apiClient.getProducts()
       if (response.success && response.data) {
-        setProducts(response.data as Product[])
+        setProductsList(response.data as Product[])
       }
     } catch (error) {
       console.error('Erreur lors du chargement des produits:', error)
@@ -195,18 +196,20 @@ export default function ProductManager() {
   })
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
-    let aValue = a[sortBy as keyof Product]
-    let bValue = b[sortBy as keyof Product]
+    let aValue: any = a[sortBy as keyof Product]
+    let bValue: any = b[sortBy as keyof Product]
     
-    if (typeof aValue === 'string') aValue = aValue.toLowerCase()
-    if (typeof bValue === 'string') bValue = bValue.toLowerCase()
+    if (sortBy === 'name') {
+      aValue = aValue.toLowerCase()
+      bValue = bValue.toLowerCase()
+    }
     
-    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1
-    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1
-    return 0
+    if (sortOrder === 'asc') {
+      return aValue > bValue ? 1 : -1
+    } else {
+      return aValue < bValue ? 1 : -1
+    }
   })
-
-  const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))]
 
   if (loading) {
     return (
@@ -234,7 +237,7 @@ export default function ProductManager() {
         </button>
       </div>
 
-      {/* Filters and Search */}
+      {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative">
@@ -253,11 +256,10 @@ export default function ProductManager() {
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            {categories.map(category => (
-              <option key={category} value={category}>
-                {category === 'all' ? 'Toutes les catégories' : category}
-              </option>
-            ))}
+            <option value="all">Toutes les catégories</option>
+            <option value="Vêtements">Vêtements</option>
+            <option value="Électronique">Électronique</option>
+            <option value="Accessoires">Accessoires</option>
           </select>
           
           <select
@@ -273,27 +275,27 @@ export default function ProductManager() {
           
           <button
             onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-            className="flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
           >
-            {sortOrder === 'asc' ? <ArrowUpIcon className="h-4 w-4" /> : <ArrowDownIcon className="h-4 w-4" />}
+            {sortOrder === 'asc' ? '↑' : '↓'}
           </button>
         </div>
       </div>
 
       {/* Products Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {sortedProducts.map((product) => (
           <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
             {/* Product Image */}
-            <div className="relative h-48 bg-gray-100">
+            <div className="aspect-w-16 aspect-h-9 bg-gray-200 relative">
               {product.images && product.images.length > 0 ? (
                 <img
                   src={product.images[0]}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-48 object-cover"
                 />
               ) : (
-                <div className="flex items-center justify-center h-full">
+                <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
                   <PhotoIcon className="h-12 w-12 text-gray-400" />
                 </div>
               )}
@@ -306,40 +308,79 @@ export default function ProductManager() {
               )}
               
               {/* Stock indicator */}
-              {product.stock < 10 && (
-                <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                  Stock faible
-                </div>
-              )}
+              <div className="absolute top-2 left-2">
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                  product.stock < 10 
+                    ? 'bg-red-100 text-red-800' 
+                    : product.stock < 50 
+                    ? 'bg-yellow-100 text-yellow-800' 
+                    : 'bg-green-100 text-green-800'
+                }`}>
+                  {product.stock} en stock
+                </span>
+              </div>
             </div>
             
             {/* Product Info */}
-            <div className="p-4">
+            <div className="p-6">
               <div className="flex items-start justify-between mb-2">
-                <h3 className="text-lg font-semibold text-gray-900 truncate">{product.name}</h3>
+                <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">{product.name}</h3>
                 <div className="flex items-center space-x-1">
                   {product.rating && (
-                    <div className="flex items-center">
-                      <StarIcon className="h-4 w-4 text-yellow-400" />
-                      <span className="text-sm text-gray-600 ml-1">{product.rating}</span>
-                    </div>
+                    <>
+                      <StarIcon className="h-4 w-4 text-yellow-400 fill-current" />
+                      <span className="text-sm text-gray-600">{product.rating}</span>
+                    </>
                   )}
                 </div>
               </div>
               
               <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
               
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xl font-bold text-blue-600">€{product.price}</span>
-                <span className="text-sm text-gray-500">Stock: {product.stock}</span>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-2xl font-bold text-gray-900">
+                  {new Intl.NumberFormat('fr-FR', {
+                    style: 'currency',
+                    currency: 'EUR'
+                  }).format(product.price)}
+                </span>
+                <div className="flex items-center space-x-2">
+                  <TagIcon className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm text-gray-500">{product.category}</span>
+                </div>
               </div>
               
-              {product.sales && (
-                <p className="text-xs text-gray-500 mb-3">{product.sales} ventes</p>
-              )}
+              {/* Stats */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-center">
+                    <ShoppingBagIcon className="h-4 w-4 text-blue-500 mr-2" />
+                    <div>
+                      <p className="text-sm text-gray-500">Stock</p>
+                      <p className="text-lg font-semibold text-gray-900">{product.stock}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-center">
+                    <CurrencyDollarIcon className="h-4 w-4 text-green-500 mr-2" />
+                    <div>
+                      <p className="text-sm text-gray-500">Ventes</p>
+                      <p className="text-lg font-semibold text-gray-900">{product.sales || 0}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
               
               {/* Actions */}
               <div className="flex space-x-2">
+                <button
+                  onClick={() => setShowForm(true)}
+                  className="flex-1 btn-secondary flex items-center justify-center text-sm"
+                >
+                  <EyeIcon className="h-4 w-4 mr-1" />
+                  Voir
+                </button>
                 <button
                   onClick={() => handleEdit(product)}
                   className="flex-1 btn-secondary flex items-center justify-center text-sm"
@@ -399,7 +440,7 @@ export default function ProductManager() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prix (€) *
+                    Prix *
                   </label>
                   <input
                     type="number"
@@ -415,13 +456,17 @@ export default function ProductManager() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Catégorie *
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="input-field"
                     required
-                  />
+                  >
+                    <option value="">Sélectionner une catégorie</option>
+                    <option value="Vêtements">Vêtements</option>
+                    <option value="Électronique">Électronique</option>
+                    <option value="Accessoires">Accessoires</option>
+                  </select>
                 </div>
                 
                 <div>
@@ -442,25 +487,53 @@ export default function ProductManager() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Description courte *
                 </label>
-                <input
-                  type="text"
+                <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="input-field"
+                  rows={3}
                   required
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description détaillée
+                  Description longue
                 </label>
                 <textarea
                   value={formData.longDescription}
                   onChange={(e) => setFormData({ ...formData, longDescription: e.target.value })}
                   className="input-field"
-                  rows={4}
+                  rows={5}
                 />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    URL vidéo
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.video}
+                    onChange={(e) => setFormData({ ...formData, video: e.target.value })}
+                    className="input-field"
+                    placeholder="https://..."
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    URLs des images (séparées par des virgules)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.images.join(', ')}
+                    onChange={(e) => setFormData({ ...formData, images: e.target.value.split(',').map(url => url.trim()) })}
+                    className="input-field"
+                    placeholder="https://..., https://..."
+                  />
+                </div>
               </div>
               
               <div className="flex space-x-3 pt-4">

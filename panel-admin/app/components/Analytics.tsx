@@ -27,7 +27,7 @@ interface AnalyticsData {
 }
 
 export default function Analytics() {
-  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedPeriod, setSelectedPeriod] = useState('30d')
 
@@ -40,7 +40,7 @@ export default function Analytics() {
     try {
       const response = await apiClient.getAnalytics(selectedPeriod)
       if (response.success && response.data) {
-        setAnalytics(response.data as AnalyticsData)
+        setAnalyticsData(response.data as AnalyticsData)
       }
     } catch (error) {
       console.error('Erreur lors du chargement des analytics:', error)

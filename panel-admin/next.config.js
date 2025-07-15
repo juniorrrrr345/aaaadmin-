@@ -1,15 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    // Désactiver les erreurs TypeScript pendant le build
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    // Désactiver les erreurs ESLint pendant le build
-    ignoreDuringBuilds: true,
-  },
   experimental: {
-    appDir: true,
+    // appDir: true // Cette option est maintenant activée par défaut dans Next.js 13+
+  },
+  images: {
+    domains: ['localhost', 'vercel.app'],
   },
 }
 
