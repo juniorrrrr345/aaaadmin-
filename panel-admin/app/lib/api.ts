@@ -41,6 +41,22 @@ export class ApiClient {
     }
   }
 
+  // Pages
+  async getPages() {
+    return this.request('/pages')
+  }
+
+  async getPage(id: string) {
+    return this.request(`/pages/${id}`)
+  }
+
+  async updatePage(id: string, pageData: any) {
+    return this.request(`/pages/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(pageData),
+    })
+  }
+
   // Produits
   async getProducts() {
     return this.request('/products')
@@ -70,34 +86,40 @@ export class ApiClient {
     })
   }
 
-  // Commandes
-  async getOrders() {
-    return this.request('/orders')
-  }
-
-  async getOrder(id: string) {
-    return this.request(`/orders/${id}`)
-  }
-
-  async updateOrderStatus(id: string, status: string) {
-    return this.request(`/orders/${id}/status`, {
-      method: 'PUT',
-      body: JSON.stringify({ status }),
+  // Upload de fichiers
+  async uploadFile(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    return this.request('/upload', {
+      method: 'POST',
+      body: formData,
+      headers: {}, // Laisser le navigateur définir le Content-Type pour FormData
     })
   }
 
-  // Clients
-  async getCustomers() {
-    return this.request('/customers')
+  // Réseaux sociaux
+  async getSocialMedia() {
+    return this.request('/social-media')
   }
 
-  async getCustomer(id: string) {
-    return this.request(`/customers/${id}`)
+  async updateSocialMedia(socialData: any) {
+    return this.request('/social-media', {
+      method: 'PUT',
+      body: JSON.stringify(socialData),
+    })
   }
 
-  // Statistiques
-  async getStats() {
-    return this.request('/stats')
+  // Paramètres du site
+  async getSettings() {
+    return this.request('/settings')
+  }
+
+  async updateSettings(settingsData: any) {
+    return this.request('/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settingsData),
+    })
   }
 }
 

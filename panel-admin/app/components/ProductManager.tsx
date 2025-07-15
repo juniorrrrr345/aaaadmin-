@@ -9,9 +9,13 @@ interface Product {
   name: string
   price: number
   description: string
-  image?: string
+  longDescription?: string
   category: string
   stock: number
+  images?: string[]
+  video?: string
+  features?: string[]
+  specifications?: any
 }
 
 export default function ProductManager() {
@@ -23,9 +27,13 @@ export default function ProductManager() {
     name: '',
     price: '',
     description: '',
+    longDescription: '',
     category: '',
     stock: '',
-    image: ''
+    images: [] as string[],
+    video: '',
+    features: [] as string[],
+    specifications: {}
   })
 
   useEffect(() => {
@@ -48,9 +56,13 @@ export default function ProductManager() {
       name: formData.name,
       price: parseFloat(formData.price),
       description: formData.description,
+      longDescription: formData.longDescription,
       category: formData.category,
       stock: parseInt(formData.stock),
-      image: formData.image
+      images: formData.images,
+      video: formData.video,
+      features: formData.features,
+      specifications: formData.specifications
     }
 
     if (editingProduct) {
@@ -77,9 +89,13 @@ export default function ProductManager() {
       name: product.name,
       price: product.price.toString(),
       description: product.description,
+      longDescription: product.longDescription || '',
       category: product.category,
       stock: product.stock.toString(),
-      image: product.image || ''
+      images: product.images || [],
+      video: product.video || '',
+      features: product.features || [],
+      specifications: product.specifications || {}
     })
     setShowForm(true)
   }
@@ -98,9 +114,13 @@ export default function ProductManager() {
       name: '',
       price: '',
       description: '',
+      longDescription: '',
       category: '',
       stock: '',
-      image: ''
+      images: [],
+      video: '',
+      features: [],
+      specifications: {}
     })
   }
 
