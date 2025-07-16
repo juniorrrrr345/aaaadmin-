@@ -1,0 +1,12 @@
+{
+  "buildCommand": "cd panel-admin && npm install && npm run build",
+  "outputDirectory": "panel-admin/.next",
+  "framework": "nextjs",
+  "installCommand": "cd panel-admin && npm install",
+  "devCommand": "cd panel-admin && npm run dev",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://qencorroezzz.vercel.app/api",
+    "NEXT_PUBLIC_ADMIN_TITLE": "Panel Admin Qencorroe",
+    "NEXT_PUBLIC_ADMIN_VERSION": "1.0.0"
+  }
+}
